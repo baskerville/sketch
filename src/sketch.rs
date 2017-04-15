@@ -63,7 +63,11 @@ impl Sketch {
                 DeviceEvent::Finger { status: FingerStatus::Down, id, position, .. } => {
                     fingers.insert(id, TouchState::new(position, Rectangle::from_point(&position)));
                 },
-                DeviceEvent::Finger { status: FingerStatus::Up, id, .. } => {
+                DeviceEvent::Finger { status: FingerStatus::Up, id, position, .. } => {
+                    if let Some(ts) = fingers.get_mut(&id) {
+                        self.fb.draw_line_segment(&position, &ts.pt, 0x00);
+                        self.fb.update(ts.rect, Mode::Fast).unwrap();
+                    }
                     fingers.remove(&id);
                 },
                 DeviceEvent::Button { status: ButtonStatus::Pressed, code: ButtonCode::Power, time } => {
