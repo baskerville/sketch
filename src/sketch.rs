@@ -18,6 +18,7 @@ pub struct Sketch {
 struct TouchState {
     pt: Point,
     rect: Rectangle,
+    last_update_time: f64,
 }
 
 impl TouchState {
@@ -25,6 +26,7 @@ impl TouchState {
         TouchState {
             pt: pt,
             rect: rect,
+            last_update_time: 0.0,
         }
     }
 }
@@ -42,7 +44,6 @@ impl Sketch {
     }
     pub fn run(&mut self) {
         let mut fingers: HashMap<i32, TouchState> = HashMap::new();
-        let mut last_update_time = 0.0;
         let mut last_save_time = 0.0;
         self.clear();
         while let Ok(evt) = self.input.events.recv() {
@@ -51,9 +52,9 @@ impl Sketch {
                     if let Some(ts) = fingers.get_mut(&id) {
                         ts.rect.merge(&position);
                         self.fb.draw_line_segment(&position, &ts.pt, 0x00);
-                        if (time - last_update_time).abs() > UPDATE_INTERVAL {
+                        if (time - ts.last_update_time).abs() > UPDATE_INTERVAL {
                             self.fb.update(ts.rect, Mode::Fast).unwrap();
-                            last_update_time = time;
+                            ts.last_update_time = time;
                             ts.rect = Rectangle::from_point(&position);
                         }
                         ts.pt = position;
