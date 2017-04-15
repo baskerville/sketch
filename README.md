@@ -31,7 +31,7 @@ You can tell what features are supported by your device from the output of `cat 
 
 # Installation
 
-You can launch the program through [kfmon](https://github.com/NiLuJe/kfmon).
+You can launch the program through [fmon](https://github.com/baskerville/fmon).
 
 # Usage
 
