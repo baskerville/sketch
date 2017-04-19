@@ -4,7 +4,21 @@ This is a drawing program that is meant to be run on a *Kobo* e-reader.
 
 It has only been tested on the *Glo HD* and the *Aura ONE*.
 
-# Building 
+# Installation
+
+First install [fmon](https://github.com/baskerville/fmon).
+
+And then issue: `unzip sketch.zip -d SD_ROOT`.
+
+# Usage
+
+Use your fingers to draw.
+
+Press the power button once to save and clear.
+
+Press it twice (wait 2 seconds before the second press) to save, clear and quit.
+
+# Building
 
 The OS used on the *Kobo* devices is *Linaro 2011.07*.
 
@@ -29,14 +43,3 @@ cargo rustc --release --target=arm-unknown-linux-gnueabihf -- -C target-feature=
 
 You can tell what features are supported by your device from the output of `cat /proc/cpuinfo`.
 
-# Installation
-
-You can launch the program through [fmon](https://github.com/baskerville/fmon).
-
-# Usage
-
-Use your fingers to draw.
-
-Press the power button once to save and clear.
-
-Press it twice to save, clear and quit.
