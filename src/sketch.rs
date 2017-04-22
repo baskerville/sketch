@@ -3,6 +3,7 @@ extern crate libc;
 extern crate png;
 
 use std::collections::HashMap;
+use device::Device;
 use framebuffer::{Framebuffer, Mode};
 use input::{Input, DeviceEvent, FingerStatus, ButtonStatus, ButtonCode};
 use geom::{Point, Rectangle};

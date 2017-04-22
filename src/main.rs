@@ -4,6 +4,7 @@ extern crate png;
 
 #[macro_use]
 mod geom;
+mod device;
 mod input;
 mod framebuffer;
 mod sketch;

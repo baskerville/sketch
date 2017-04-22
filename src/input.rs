@@ -9,6 +9,7 @@ use std::os::unix::io::AsRawFd;
 use std::fs::File;
 use std::thread;
 use std::sync::mpsc;
+use device::Device;
 use geom::Point;
 
 // Event types
@@ -18,11 +19,30 @@ pub const EV_ABS: u16 = 3;
 
 // Event codes
 pub const SYN_MT_REPORT: u16 = 2;
+pub const SYN_REPORT: u16 = 0;
 pub const ABS_MT_TRACKING_ID: u16 = 57;
 pub const ABS_MT_TOUCH_MAJOR: u16 = 48;
+pub const ABS_PRESSURE: u16 = 24;
 pub const ABS_MT_POSITION_X: u16 = 53;
 pub const ABS_MT_POSITION_Y: u16 = 54;
+pub const ABS_X: u16 = 0;
+pub const ABS_Y: u16 = 1;
 pub const KEY_POWER: u16 = 116;
+pub const KEY_HOME: u16 = 102;
+
+pub const SINGLE_TOUCH_CODES: TouchCodes = TouchCodes {
+    report: SYN_REPORT,
+    pressure: ABS_PRESSURE,
+    x: ABS_X,
+    y: ABS_Y,
+};
+
+pub const MULTI_TOUCH_CODES: TouchCodes = TouchCodes {
+    report: SYN_MT_REPORT,
+    pressure: ABS_MT_TOUCH_MAJOR,
+    x: ABS_MT_POSITION_X,
+    y: ABS_MT_POSITION_Y,
+};
 
 #[repr(C)]
 pub struct InputEvent {
@@ -30,6 +50,21 @@ pub struct InputEvent {
     pub kind: u16, // type
     pub code: u16,
     pub value: i32,
+}
+
+// Handle different touch protocols
+#[derive(Debug)]
+pub struct TouchCodes {
+    report: u16,
+    pressure: u16,
+    x: u16,
+    y: u16,
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub enum TouchProto {
+    Single,
+    Multi,
 }
 
 #[derive(Debug)]
@@ -131,23 +166,28 @@ pub fn device_events(rx: Receiver<InputEvent>, dims: (u32, u32)) -> Receiver<Dev
 }
 
 pub fn parse_device_events(rx: Receiver<InputEvent>, ty: Sender<DeviceEvent>, dims: (u32, u32)) {
-    let mut id = -1;
+    let mut id = 0;
     let mut position = Point::default();
     let mut pressure = 0;
     let mut fingers: HashMap<i32, Point> = HashMap::new();
+    let device = Device::current();
+    let mut tc = if device.proto == TouchProto::Multi { MULTI_TOUCH_CODES } else { SINGLE_TOUCH_CODES };
+    if device.swap_xy {
+        mem::swap(&mut tc.x, &mut tc.y);
+    }
     while let Ok(evt) = rx.recv() {
         if evt.kind == EV_ABS {
             if evt.code == ABS_MT_TRACKING_ID {
                 id = evt.value;
-            } else if evt.code == ABS_MT_TOUCH_MAJOR {
+            } else if evt.code == tc.pressure {
                 pressure = evt.value;
-            } else if evt.code == ABS_MT_POSITION_X {
-                position.y = evt.value;
-            } else if evt.code == ABS_MT_POSITION_Y {
+            } else if evt.code == tc.x {
                 position.x = dims.0 as i32 - 1 - evt.value;
+            } else if evt.code == tc.y {
+                position.y = evt.value;
             }
         } else if evt.kind == EV_SYN {
-            if evt.code == SYN_MT_REPORT {
+            if evt.code == tc.report {
                 if let Some(&p) = fingers.get(&id) {
                     if pressure > 0 {
                         if p != position {
