@@ -1,6 +1,6 @@
 [root]
 name = "sketch"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chrono 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -33,7 +33,7 @@ dependencies = [
 
 [[package]]
 name = "deflate"
-version = "0.7.5"
+version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "adler32 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -97,7 +97,7 @@ version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "deflate 0.7.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "deflate 0.7.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "inflate 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-iter 0.1.33 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -133,7 +133,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "aad18937a628ec6abcd26d1489012cc0e18c21798210f491af69ded9b881106d"
 "checksum byteorder 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c40977b0ee6b9885c9013cd41d9feffdd22deb3bb4dc3a71d901cc7a77de18c8"
 "checksum chrono 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "158b0bd7d75cbb6bf9c25967a48a2e9f77da95876b858eadfabaa99cd069de6e"
-"checksum deflate 0.7.5 (registry+https://github.com/rust-lang/crates.io-index)" = "ebb02aaf4b775afc96684b8402510a338086974e38570a1f65bea8c202eb77a7"
+"checksum deflate 0.7.6 (registry+https://github.com/rust-lang/crates.io-index)" = "54b46d466b36f3bcc4dbb288be4f7de6f15ff90eda7a594408fbc7b780258e2f"
 "checksum inflate 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "e7e0062d2dc2f17d2f13750d95316ae8a2ff909af0fda957084f5defd87c43bb"
 "checksum kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
 "checksum libc 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)" = "88ee81885f9f04bff991e306fea7c1c60a5f0f9e409e99f6b40e3311a3363135"
