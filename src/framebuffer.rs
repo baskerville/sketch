@@ -172,12 +172,17 @@ pub enum Mode {
     Full,
 }
 
+type SetPixelRgb = fn(&mut Framebuffer, u32, u32, [u8; 3]);
+type AsRgb = fn(&Framebuffer) -> Vec<u8>;
+
 pub struct Framebuffer {
     device: File,
     frame: *mut libc::c_void,
     frame_size: libc::size_t, 
     token: u32,
     flags: u32,
+    set_pixel_rgb: SetPixelRgb,
+    as_rgb: AsRgb,
     pub bytes_per_pixel: u8,
     pub var_info: VarScreenInfo,
     pub fix_info: FixScreenInfo,
@@ -195,10 +200,14 @@ impl Framebuffer {
 
         let bytes_per_pixel = var_info.bits_per_pixel / 8;
 
-        let frame_size = (var_info.xres_virtual *
-                          var_info.yres_virtual * bytes_per_pixel) as libc::size_t;
+        let mut frame_size = (var_info.xres_virtual *
+                              var_info.yres_virtual * bytes_per_pixel) as libc::size_t;
 
-        assert!(frame_size as u32 >= bytes_per_pixel);
+        if frame_size > fix_info.smem_len as usize {
+            frame_size = fix_info.smem_len as usize;
+        }
+
+        assert!(frame_size as u32 >= var_info.yres * fix_info.line_length);
 
         let frame = unsafe {
             libc::mmap(ptr::null_mut(), frame_size,
@@ -209,12 +218,19 @@ impl Framebuffer {
         if frame.is_null() {
             Err(io::Error::last_os_error())
         } else {
+            let (set_pixel_rgb, as_rgb): (SetPixelRgb, AsRgb) = if var_info.bits_per_pixel > 16 {
+                (set_pixel_rgb_32, as_rgb_32)
+            } else {
+                (set_pixel_rgb_16, as_rgb_16)
+            };
             Ok(Framebuffer {
                    device: device,
                    frame: frame,
                    frame_size: frame_size,
                    token: 0,
                    flags: 0,
+                   set_pixel_rgb: set_pixel_rgb,
+                   as_rgb: as_rgb,
                    bytes_per_pixel: bytes_per_pixel as u8,
                    var_info: var_info,
                    fix_info: fix_info,
@@ -222,23 +238,8 @@ impl Framebuffer {
         }
     }
     
-    #[inline]
-    pub fn set_pixel_rgb(&mut self, x: u32, y: u32, rgb: [u8; 3]) {
-        let addr = (self.var_info.xoffset as isize + x as isize) * (self.bytes_per_pixel as isize) +
-                   (self.var_info.yoffset as isize + y as isize) * (self.fix_info.line_length as isize);
-
-        assert!(addr < self.frame_size as isize);
-
-        // Assumes RGB565 for the framebuffer format
-        unsafe {
-            let spot = self.frame.offset(addr) as *mut u8;
-            *spot.offset(0) = rgb[2] >> 3 | (rgb[1] & 0b00011100) << 3;
-            *spot.offset(1) = (rgb[0] & 0b11111000) | rgb[1] >> 5;
-        }
-    }
-
     pub fn set_pixel(&mut self, x: u32, y: u32, gray: u8) {
-        self.set_pixel_rgb(x, y, [gray, gray, gray]);
+        (self.set_pixel_rgb)(self, x, y, [gray, gray, gray]);
     }
 
     pub fn draw_disk(&mut self, center: &Point, radius: u32, gray: u8) -> Rectangle {
@@ -357,28 +358,13 @@ impl Framebuffer {
         unsafe { slice::from_raw_parts(self.frame as *const u8, self.frame_size) }
     }
 
-    fn as_rgb888(&self) -> Vec<u8> {
-        let (width, height) = self.dims();
-        let mut rgb888 = Vec::with_capacity((width * height * 3) as usize);
-        let rgb565 = self.as_bytes();
-        let virtual_width = self.var_info.xres_virtual as usize;
-        for (_, pair) in rgb565.chunks(2).take(height as usize * virtual_width).enumerate()
-                               .filter(|&(i, _)| i % virtual_width < width as usize) {
-            let r = pair[1] & 0b11111000;
-            let g = ((pair[1] & 0b00000111) << 5) | ((pair[0] & 0b11100000) >> 3);
-            let b = (pair[0] & 0b00011111) << 3;
-            rgb888.extend_from_slice(&[r, g, b]);
-        }
-        rgb888
-    }
-
     pub fn save<P: AsRef<Path>>(&self, path: P) {
         let (width, height) = self.dims();
         let file = File::create(path).unwrap();
         let mut encoder = png::Encoder::new(file, width, height);
         encoder.set(png::ColorType::RGB).set(png::BitDepth::Eight);
         let mut writer = encoder.write_header().unwrap();
-        writer.write_image_data(&self.as_rgb888()).unwrap();
+        writer.write_image_data(&(self.as_rgb)(self)).unwrap();
     }
 
     pub fn toggle_inverse(&mut self) {
@@ -400,6 +386,66 @@ impl Framebuffer {
     pub fn length(&self) -> usize {
         self.frame_size as usize
     }
+}
+
+#[inline]
+pub fn set_pixel_rgb_16(fb: &mut Framebuffer, x: u32, y: u32, rgb: [u8; 3]) {
+    let addr = (fb.var_info.xoffset as isize + x as isize) * (fb.bytes_per_pixel as isize) +
+               (fb.var_info.yoffset as isize + y as isize) * (fb.fix_info.line_length as isize);
+
+    assert!(addr < fb.frame_size as isize);
+
+    unsafe {
+        let spot = fb.frame.offset(addr) as *mut u8;
+        *spot.offset(0) = rgb[2] >> 3 | (rgb[1] & 0b00011100) << 3;
+        *spot.offset(1) = (rgb[0] & 0b11111000) | rgb[1] >> 5;
+    }
+}
+
+#[inline]
+pub fn set_pixel_rgb_32(fb: &mut Framebuffer, x: u32, y: u32, rgb: [u8; 3]) {
+    let addr = (fb.var_info.xoffset as isize + x as isize) * (fb.bytes_per_pixel as isize) +
+               (fb.var_info.yoffset as isize + y as isize) * (fb.fix_info.line_length as isize);
+
+    assert!(addr < fb.frame_size as isize);
+
+    unsafe {
+        let spot = fb.frame.offset(addr) as *mut u8;
+        *spot.offset(0) = rgb[2];
+        *spot.offset(1) = rgb[1];
+        *spot.offset(2) = rgb[0];
+        // *spot.offset(3) = 0x00;
+    }
+}
+
+fn as_rgb_16(fb: &Framebuffer) -> Vec<u8> {
+    let (width, height) = fb.dims();
+    let mut rgb888 = Vec::with_capacity((width * height * 3) as usize);
+    let rgb565 = fb.as_bytes();
+    let virtual_width = fb.var_info.xres_virtual as usize;
+    for (_, pair) in rgb565.chunks(2).take(height as usize * virtual_width).enumerate()
+                           .filter(|&(i, _)| i % virtual_width < width as usize) {
+        let r = pair[1] & 0b11111000;
+        let g = ((pair[1] & 0b00000111) << 5) | ((pair[0] & 0b11100000) >> 3);
+        let b = (pair[0] & 0b00011111) << 3;
+        rgb888.extend_from_slice(&[r, g, b]);
+    }
+    rgb888
+}
+
+fn as_rgb_32(fb: &Framebuffer) -> Vec<u8> {
+    let (width, height) = fb.dims();
+    let mut rgb888 = Vec::with_capacity((width * height * 3) as usize);
+    let bgra8888 = fb.as_bytes();
+    let virtual_width = fb.var_info.xres_virtual as usize;
+    for (_, bgra) in bgra8888.chunks(4).take(height as usize * virtual_width).enumerate()
+                           .filter(|&(i, _)| i % virtual_width < width as usize) {
+        let r = bgra[2];
+        let g = bgra[1];
+        let b = bgra[0];
+        rgb888.extend_from_slice(&[r, g, b]);
+    }
+    rgb888
 }
 
 pub fn fix_screen_info(device: &File) -> io::Result<FixScreenInfo> {
