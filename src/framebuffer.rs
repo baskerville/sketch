@@ -227,7 +227,7 @@ impl Framebuffer {
                    device: device,
                    frame: frame,
                    frame_size: frame_size,
-                   token: 0,
+                   token: 1,
                    flags: 0,
                    set_pixel_rgb: set_pixel_rgb,
                    as_rgb: as_rgb,
