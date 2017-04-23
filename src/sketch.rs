@@ -10,6 +10,7 @@ use geom::{Point, Rectangle};
 
 const UPDATE_INTERVAL: f64 = 1.0 / 60.0;
 const SAVE_INTERVAL: f64 = 5.0;
+const INVERSE_INTERVAL: f64 = 2.0;
 
 pub struct Sketch {
     fb: Framebuffer,
@@ -78,6 +79,16 @@ impl Sketch {
                     last_save_time = time;
                     self.save();
                     self.clear();
+                },
+                DeviceEvent::Button { status: ButtonStatus::Released, code: ButtonCode::Power, time } => {
+                    if (time - last_save_time).abs() < INVERSE_INTERVAL {
+                        continue;
+                    }
+                    self.fb.toggle_inverse();
+                    let (width, height) = self.fb.dims();
+                    if let Ok(token) = self.fb.update(rect!(0, 0, width as i32, height as i32), Mode::Full) {
+                        self.fb.wait(token).unwrap();
+                    }
                 },
                 _ => (),
             }

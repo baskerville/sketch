@@ -18,6 +18,8 @@ Press the power button once to save and clear.
 
 Press it twice (wait 2 seconds before the second press) to save, clear and quit.
 
+Press the power button more than 2 seconds and release it to inverse the displayed colors.
+
 # Configuration
 
 If the touch feedback doesn't match the position of your fingers, add the following:
