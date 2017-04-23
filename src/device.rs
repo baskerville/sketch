@@ -1,6 +1,7 @@
 extern crate libc;
 
 use input::TouchProto;
+use std::env;
 
 #[derive(Debug)]
 pub enum Model {
@@ -29,7 +30,7 @@ impl Default for Device {
         Device {
             model: Model::Touch,
             proto: TouchProto::Single,
-            swap_xy: false,
+            swap_xy: true,
             dpi: 167,
         }
     }
@@ -37,24 +38,7 @@ impl Default for Device {
 
 impl Device {
     pub fn current() -> Device {
-        let product = unsafe {
-            let io = libc::popen("/bin/kobo_config.sh 2> /dev/null\0".as_ptr() as *const libc::c_char,
-                                 "r\0".as_ptr() as *const libc::c_char);
-            if io.is_null() {
-                "trilogy".to_owned()
-            } else {
-                let mut buf = [0u8; 16];
-                let result = if !libc::fgets(buf.as_mut_ptr() as *mut libc::c_char,
-                                             buf.len() as libc::c_int, io).is_null() {
-                    let len = buf.iter().position(|&v| v == 0).unwrap_or(0);
-                    String::from_utf8_lossy(&buf[..len]).trim_right().to_owned()
-                } else {
-                    "trilogy".to_owned()
-                };
-                libc::pclose(io);
-                result
-            }
-        };
+        let product = env::var("PRODUCT").unwrap_or("trilogy".to_owned());
         match product.as_ref() {
             "kraken" => Device {
                 model: Model::Glo,

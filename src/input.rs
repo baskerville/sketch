@@ -4,6 +4,7 @@ use std::sync::mpsc::{Sender, Receiver};
 use std::collections::HashMap;
 use std::slice;
 use std::mem;
+use std::env;
 use std::io::Read;
 use std::os::unix::io::AsRawFd;
 use std::fs::File;
@@ -172,7 +173,7 @@ pub fn parse_device_events(rx: Receiver<InputEvent>, ty: Sender<DeviceEvent>, di
     let mut fingers: HashMap<i32, Point> = HashMap::new();
     let device = Device::current();
     let mut tc = if device.proto == TouchProto::Multi { MULTI_TOUCH_CODES } else { SINGLE_TOUCH_CODES };
-    if device.swap_xy {
+    if device.swap_xy && env::var("SKETCH_UNSWAP_XY").is_err() {
         mem::swap(&mut tc.x, &mut tc.y);
     }
     while let Ok(evt) = rx.recv() {
