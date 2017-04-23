@@ -90,7 +90,9 @@ impl Sketch {
                 self.fb.set_pixel(x, y, 0xff);
             }
         }
-        self.fb.update(rect!(0, 0, width as i32, height as i32), Mode::Full).unwrap();
+        if let Ok(token) = self.fb.update(rect!(0, 0, width as i32, height as i32), Mode::Full) {
+            self.fb.wait(token).unwrap();
+        }
     }
 
     pub fn save(&mut self) {
