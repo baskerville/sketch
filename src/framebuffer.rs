@@ -215,7 +215,7 @@ impl Framebuffer {
                        device.as_raw_fd(), 0)
         };
 
-        if frame.is_null() {
+        if frame == libc::MAP_FAILED {
             Err(io::Error::last_os_error())
         } else {
             let (set_pixel_rgb, as_rgb): (SetPixelRgb, AsRgb) = if var_info.bits_per_pixel > 16 {
