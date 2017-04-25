@@ -25,6 +25,7 @@ Press the power button more than 2 seconds and release it to inverse the display
 If the touch feedback doesn't match the position of your fingers, add the following:
 ```
 export SKETCH_UNSWAP_XY=1
+export SKETCH_UNMIRROR_X=1
 ```
 in `sketch.sh` after `export PRODUCT…`.
 

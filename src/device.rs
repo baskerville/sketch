@@ -21,7 +21,6 @@ pub enum Model {
 pub struct Device {
     pub model: Model,
     pub proto: TouchProto,
-    pub swap_xy: bool,
     pub dpi: u16,
 }
 
@@ -30,7 +29,6 @@ impl Default for Device {
         Device {
             model: Model::Touch,
             proto: TouchProto::Single,
-            swap_xy: true,
             dpi: 167,
         }
     }
@@ -43,55 +41,46 @@ impl Device {
             "kraken" => Device {
                 model: Model::Glo,
                 proto: TouchProto::Single,
-                swap_xy: true,
                 dpi: 212,
             },
             "pixie" => Device {
                 model: Model::Mini,
                 proto: TouchProto::Single,
-                swap_xy: true,
                 dpi: 200,
             },
             "dragon" => Device {
                 model: Model::AuraHD,
                 proto: TouchProto::Single,
-                swap_xy: true,
                 dpi: 265,
             },
             "phoenix" => Device {
                 model: Model::Aura,
                 proto: TouchProto::Multi,
-                swap_xy: true,
                 dpi: 212,
             },
             "dahlia" => Device {
                 model: Model::AuraH2O,
                 proto: TouchProto::Multi,
-                swap_xy: true,
                 dpi: 265,
             },
             "alyssum" => Device {
                 model: Model::GloHD,
                 proto: TouchProto::Multi,
-                swap_xy: true,
                 dpi: 300,
             },
             "pika" => Device {
                 model: Model::Touch2,
                 proto: TouchProto::Multi,
-                swap_xy: true,
                 dpi: 167,
             },
             "daylight" => Device {
                 model: Model::AuraONE,
                 proto: TouchProto::Multi,
-                swap_xy: true,
                 dpi: 300,
             },
             "star" => Device {
                 model: Model::AuraEdition2,
                 proto: TouchProto::Multi,
-                swap_xy: true,
                 dpi: 212,
             },
             _ => Device::default(),

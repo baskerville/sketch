@@ -173,9 +173,10 @@ pub fn parse_device_events(rx: Receiver<InputEvent>, ty: Sender<DeviceEvent>, di
     let mut fingers: HashMap<i32, Point> = HashMap::new();
     let device = Device::current();
     let mut tc = if device.proto == TouchProto::Multi { MULTI_TOUCH_CODES } else { SINGLE_TOUCH_CODES };
-    if device.swap_xy && env::var("SKETCH_UNSWAP_XY").is_err() {
+    if env::var("SKETCH_UNSWAP_XY").is_err() {
         mem::swap(&mut tc.x, &mut tc.y);
     }
+    let mirror_x = env::var("SKETCH_UNMIRROR_X").is_err();
     while let Ok(evt) = rx.recv() {
         if evt.kind == EV_ABS {
             if evt.code == ABS_MT_TRACKING_ID {
@@ -183,7 +184,7 @@ pub fn parse_device_events(rx: Receiver<InputEvent>, ty: Sender<DeviceEvent>, di
             } else if evt.code == tc.pressure {
                 pressure = evt.value;
             } else if evt.code == tc.x {
-                position.x = dims.0 as i32 - 1 - evt.value;
+                position.x = if mirror_x { dims.0 as i32 - 1 - evt.value } else { evt.value };
             } else if evt.code == tc.y {
                 position.y = evt.value;
             }
