@@ -19,7 +19,7 @@ A short press/release of the power button will:
 - Save and clear the canvas if it isn't empty.
 - Quit if it's empty.
 
-A long press/release (hold more than 2 seconds) of the power button will inverse the displayed colors.
+A long press/release (held more than 2 seconds) of the power button will inverse the displayed colors.
 
 # Configuration
 
