@@ -179,14 +179,14 @@ pub fn parse_device_events(rx: Receiver<InputEvent>, ty: Sender<DeviceEvent>, di
     let mirror_x = env::var("SKETCH_UNMIRROR_X").is_err();
     while let Ok(evt) = rx.recv() {
         if evt.kind == EV_ABS {
-            if evt.code == ABS_MT_TRACKING_ID {
-                id = evt.value;
-            } else if evt.code == tc.pressure {
+            if evt.code == tc.pressure {
                 pressure = evt.value;
             } else if evt.code == tc.x {
                 position.x = if mirror_x { dims.0 as i32 - 1 - evt.value } else { evt.value };
             } else if evt.code == tc.y {
                 position.y = evt.value;
+            } else if evt.code == ABS_MT_TRACKING_ID {
+                id = evt.value;
             }
         } else if evt.kind == EV_SYN {
             if evt.code == tc.report {
