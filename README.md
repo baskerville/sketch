@@ -14,11 +14,12 @@ And then issue: `unzip sketch.zip -d SD_ROOT`.
 
 Use your fingers to draw.
 
-Press the power button once to save and clear.
+A short press/release of the power button will:
 
-Press it twice (wait 2 seconds before the second press) to save, clear and quit.
+- Save and clear the canvas if it isn't empty.
+- Quit if it's empty.
 
-Press the power button more than 2 seconds and release it to inverse the displayed colors.
+A long press/release (hold more than 2 seconds) of the power button will inverse the displayed colors.
 
 # Configuration
 

@@ -3,18 +3,17 @@ extern crate libc;
 extern crate png;
 
 use std::collections::HashMap;
-use device::Device;
 use framebuffer::{Framebuffer, Mode};
 use input::{Input, DeviceEvent, FingerStatus, ButtonStatus, ButtonCode};
 use geom::{Point, Rectangle};
 
 const UPDATE_INTERVAL: f64 = 1.0 / 60.0;
-const SAVE_INTERVAL: f64 = 5.0;
 const INVERSE_INTERVAL: f64 = 2.0;
 
 pub struct Sketch {
     fb: Framebuffer,
     input: Input,
+    has_drawn: bool,
 }
 
 struct TouchState {
@@ -42,11 +41,12 @@ impl Sketch {
         Sketch {
             fb: fb,
             input: input,
+            has_drawn: false,
         }
     }
     pub fn run(&mut self) {
         let mut fingers: HashMap<i32, TouchState> = HashMap::new();
-        let mut last_save_time = 0.0;
+        let mut last_pressed_time = 0.0;
         self.clear();
         while let Ok(evt) = self.input.events.recv() {
             match evt {
@@ -71,26 +71,29 @@ impl Sketch {
                         self.fb.update(ts.rect, Mode::Fast).unwrap();
                     }
                     fingers.remove(&id);
+                    self.has_drawn = true;
                 },
-                DeviceEvent::Button { status: ButtonStatus::Pressed, code: ButtonCode::Power, time } => {
-                    if (time - last_save_time).abs() < SAVE_INTERVAL {
-                        break;
+                DeviceEvent::Button { status, code: ButtonCode::Power, time } => {
+                    match status {
+                        ButtonStatus::Pressed => last_pressed_time = time,
+                        ButtonStatus::Released => {
+                            if (time - last_pressed_time).abs() < INVERSE_INTERVAL {
+                                if self.has_drawn {
+                                    self.save();
+                                    self.clear();
+                                } else {
+                                    break;
+                                }
+                            } else {
+                                self.fb.toggle_inverse();
+                                let (width, height) = self.fb.dims();
+                                if let Ok(token) = self.fb.update(rect!(0, 0, width as i32, height as i32), Mode::Full) {
+                                    self.fb.wait(token).unwrap();
+                                }
+                            }
+                        }
                     }
-                    last_save_time = time;
-                    self.save();
-                    self.clear();
                 },
-                DeviceEvent::Button { status: ButtonStatus::Released, code: ButtonCode::Power, time } => {
-                    if (time - last_save_time).abs() < INVERSE_INTERVAL {
-                        continue;
-                    }
-                    self.fb.toggle_inverse();
-                    let (width, height) = self.fb.dims();
-                    if let Ok(token) = self.fb.update(rect!(0, 0, width as i32, height as i32), Mode::Full) {
-                        self.fb.wait(token).unwrap();
-                    }
-                },
-                _ => (),
             }
         }
     }
@@ -104,6 +107,7 @@ impl Sketch {
         if let Ok(token) = self.fb.update(rect!(0, 0, width as i32, height as i32), Mode::Full) {
             self.fb.wait(token).unwrap();
         }
+        self.has_drawn = false;
     }
 
     pub fn save(&mut self) {
