@@ -2,9 +2,40 @@ use std::cmp;
 use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, DivAssign};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum Dir {
+    North,
+    East,
+    South,
+    West,
+}
+
+#[derive(Debug)]
+pub enum Axis {
+    Horizontal,
+    Vertical,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Point {
     pub x: i32,
     pub y: i32,
+}
+
+impl Dir {
+    pub fn opposite(&self) -> Dir {
+        match *self {
+            Dir::North => Dir::South,
+            Dir::South => Dir::North,
+            Dir::East => Dir::West,
+            Dir::West => Dir::East,
+        }
+    }
+    pub fn axis(&self) -> Axis {
+        match *self {
+            Dir::North | Dir::South => Axis::Vertical,
+            Dir::East | Dir::West => Axis::Horizontal,
+        }
+    }
 }
 
 impl Point {
@@ -17,8 +48,26 @@ impl Point {
     pub fn dist2(&self, pt: &Point) -> u32 {
         ((pt.x - self.x).pow(2) + (pt.y - self.y).pow(2)) as u32
     }
+    pub fn length(&self) -> f32 {
+        ((self.x.pow(2) + self.y.pow(2)) as f32).sqrt()
+    }
     pub fn angle(&self) -> f32 {
         (-self.y as f32).atan2(self.x as f32)
+    }
+    pub fn dir(&self) -> Dir {
+        if self.x.abs() > self.y.abs() {
+            if self.x.is_positive() {
+                Dir::East
+            } else {
+                Dir::West
+            }
+        } else {
+            if self.y.is_positive() {
+                Dir::South
+            } else {
+                Dir::North
+            }
+        }
     }
 }
 

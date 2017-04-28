@@ -1,15 +1,14 @@
 extern crate libc;
 
-use std::sync::mpsc::{Sender, Receiver};
+use std::sync::mpsc::{self, Sender, Receiver};
+use std::os::unix::io::AsRawFd;
 use std::collections::HashMap;
+use std::thread;
+use std::io::Read;
+use std::fs::File;
 use std::slice;
 use std::mem;
 use std::env;
-use std::io::Read;
-use std::os::unix::io::AsRawFd;
-use std::fs::File;
-use std::thread;
-use std::sync::mpsc;
 use device::Device;
 use geom::Point;
 
@@ -68,25 +67,25 @@ pub enum TouchProto {
     Multi,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum FingerStatus {
     Down,
     Motion,
     Up,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum ButtonStatus {
     Pressed,
     Released,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum ButtonCode {
     Power,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum DeviceEvent {
     Finger {
         time: f64,
@@ -230,37 +229,4 @@ pub fn parse_device_events(rx: Receiver<InputEvent>, ty: Sender<DeviceEvent>, di
             }
         }
     }
-}
-
-#[derive(Debug)]
-enum TouchStatus {
-    Begin,
-    End
-}
-
-#[derive(Debug)]
-enum Dir {
-    North,
-    East,
-    South,
-    West,
-}
-
-#[derive(Debug)]
-enum GestureEvent {
-    Touch {
-        status: TouchStatus,
-        position: Point,
-    },
-    Tap {
-        finger_count: usize,
-        position: Point,
-    },
-    Swipe {
-        finger_count: usize,
-        dir: Dir,
-    },
-    Pinch,
-    Spread,
-    Rotate,
 }
